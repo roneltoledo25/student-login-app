@@ -1,127 +1,140 @@
-import pandas as pd
 import streamlit as st
 import sqlite3
+import pandas as pd
 
-# --- PAGE SETUP ---
-st.set_page_config(page_title="Student Registration", page_icon="🎓")
+# --- PAGE CONFIGURATION ---
+st.set_page_config(page_title="School Grading System", page_icon="🏫")
 
-# --- HIDE STREAMLIT STYLE (Optional, makes it look cleaner) ---
-hide_st_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
-
-# --- DATABASE FUNCTIONS ---
+# --- 1. DATABASE FUNCTIONS ---
 def init_db():
-    """Initializes the SQLite database."""
-    try:
-        # Connect to SQLite (creates the file 'student.db' if it doesn't exist)
-        conn = sqlite3.connect('student.db')
-        c = conn.cursor()
-        
-        # Create table (Note: SQLite syntax is slightly different from MySQL)
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS student (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                Username TEXT UNIQUE,
-                Password TEXT
-            )
-        """)
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        st.error(f"Database Error: {e}")
+    conn = sqlite3.connect('student.db')
+    c = conn.cursor()
+    # Table for Users (Teachers/Admins)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS student (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Username TEXT UNIQUE,
+            Password TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def login_user(username, password):
+    conn = sqlite3.connect('student.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM student WHERE Username = ? AND Password = ?", (username, password))
+    user = c.fetchone()
+    conn.close()
+    return user
 
 def add_user(username, password):
-    """Adds a user to the database."""
     try:
         conn = sqlite3.connect('student.db')
         c = conn.cursor()
-        
-        # Check if user exists
-        c.execute("SELECT * FROM student WHERE Username = ?", (username,))
-        if c.fetchone():
-            return False, "Username already taken."
-        
-        # Insert new user
         c.execute("INSERT INTO student (Username, Password) VALUES (?, ?)", (username, password))
         conn.commit()
         conn.close()
-        return True, "User added successfully!"
-    except Exception as e:
-        return False, f"Error: {e}"
+        return True
+    except:
+        return False
 
-# --- RUN DATABASE SETUP ---
+# Initialize DB on startup
 init_db()
 
-# --- THE WEB INTERFACE ---
-st.title("New User Registration")
-st.write("Enter details to register a new teacher account.")
+# --- 2. SESSION STATE (The Memory) ---
+# This checks: "Is someone logged in right now?"
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+if 'username' not in st.session_state:
+    st.session_state.username = ""
 
-# We use a 'form' so the page doesn't reload until you hit Submit
-with st.form("register_form"):
-    
-    # The Input Fields
-    # Note: 'type="password"' hides the text, just like show="*" in Tkinter
-    admin_code = st.text_input("Admin Code", type="password", placeholder="Enter Admin Code")
-    username = st.text_input("Username", placeholder="Create a UserID")
-    password = st.text_input("Password", type="password", placeholder="Create a Password")
-    
-    # The Submit Button
-    submitted = st.form_submit_button("ADD NEW USER")
+# --- 3. THE LOGOUT FUNCTION ---
+def logout():
+    st.session_state.logged_in = False
+    st.session_state.username = ""
+    st.rerun()
 
-# --- THE LOGIC (Runs when button is clicked) ---
-if submitted:
-    # 1. Check Admin Code
-    if admin_code != "2527":
-        st.error("❌ Incorrect Admin Code! You are not authorized.")
+# --- 4. THE LOGIN PAGE (What they see first) ---
+def login_page():
+    st.title("🏫 Teacher Login Portal")
+    
+    with st.form("login_form"):
+        user = st.text_input("Username")
+        pwd = st.text_input("Password", type="password")
+        submit = st.form_submit_button("Login")
         
-    # 2. Check Empty Fields
-    elif not username or username == "UserID":
-        st.warning("⚠️ Username cannot be empty!")
+        if submit:
+            if login_user(user, pwd):
+                st.session_state.logged_in = True
+                st.session_state.username = user
+                st.success("Login Successful!")
+                st.rerun() # Reload the page to show the dashboard
+            else:
+                st.error("❌ Invalid Username or Password")
+
+# --- 5. THE ADMIN PANEL (For YOU only) ---
+def admin_page():
+    st.header("Admin Panel (Add Teachers)")
+    
+    # Registration Form
+    with st.form("register_teacher"):
+        new_user = st.text_input("New Teacher Username")
+        new_pwd = st.text_input("New Teacher Password", type="password")
+        admin_code = st.text_input("Admin Security Code", type="password")
         
-    elif not password or password == "Password":
-        st.warning("⚠️ Password cannot be empty!")
+        if st.form_submit_button("Add Teacher"):
+            if admin_code == "2527": # Your secret code
+                if add_user(new_user, new_pwd):
+                    st.success(f"Teacher {new_user} added!")
+                else:
+                    st.error("Username already taken.")
+            else:
+                st.error("Wrong Admin Code!")
+
+    # View Users Table
+    st.markdown("---")
+    if st.checkbox("Show Database"):
+        conn = sqlite3.connect('student.db')
+        df = pd.read_sql_query("SELECT * FROM student", conn)
+        conn.close()
+        st.dataframe(df)
+
+# --- 6. THE GRADING DASHBOARD (The Goal) ---
+def grading_dashboard():
+    st.sidebar.title(f"Welcome, {st.session_state.username}")
+    if st.sidebar.button("Log Out"):
+        logout()
+    
+    st.title("📝 Student Grading System")
+    st.write("Here is where you will input grades.")
+    
+    # --- PLACEHOLDER FOR GRADING LOGIC ---
+    # Next step: We will build the table to save grades here!
+    
+    tab1, tab2 = st.tabs(["Input Grades", "View Report Card"])
+    
+    with tab1:
+        st.info("Select a student and enter their grade below.")
+        col1, col2 = st.columns(2)
+        with col1:
+            student_name = st.text_input("Student Name")
+        with col2:
+            grade = st.number_input("Grade", 0, 100)
         
-    # 3. Try to Register
+        if st.button("Save Grade"):
+            st.toast(f"Saved grade {grade} for {student_name}")
+            # We need to create a database table for this next!
+
+# --- 7. MAIN APP CONTROLLER ---
+# This decides which page to show
+
+sidebar_choice = st.sidebar.radio("Navigation", ["Login / Dashboard", "Admin Panel"])
+
+if sidebar_choice == "Admin Panel":
+    admin_page()
+else:
+    if st.session_state.logged_in:
+        grading_dashboard()
     else:
-        success, message = add_user(username, password)
-        if success:
-            st.success(f"✅ {message}")
-            st.balloons() # A fun animation!
-        else:
-            st.error(f"❌ {message}")
-
-# --- VIEW USERS ON PAGE ---
-if st.checkbox("Show All Registered Users"):
-    conn = sqlite3.connect('student.db')
-    c = conn.cursor()
-    
-    # Get the data
-    c.execute("SELECT * FROM student")
-    data = c.fetchall()
-    conn.close()
-
-    # Create a nicely labeled table
-    # We assume the columns are: ID, Username, Password (based on your CREATE TABLE code)
-    df = pd.DataFrame(data, columns=["ID", "Username", "Password"])
-    
-    # Display it!
-    #st.table(df)
-    st.dataframe(df, hide_index=True)
-
-    # --- DOWNLOAD DATABASE SECTION ---
-st.markdown("---")
-
-# 1. Read the database file as binary data
-with open("student.db", "rb") as file:
-    btn = st.download_button(
-        label="📥 Download Database File",
-        data=file,
-        file_name="student.db",
-        mime="application/octet-stream"
-    )
+        login_page()
