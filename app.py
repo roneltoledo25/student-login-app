@@ -60,7 +60,7 @@ init_db()
 
 # --- THE WEB INTERFACE ---
 st.title("New User Registration")
-st.write("Enter details to register a new student account.")
+st.write("Enter details to register a new teacher account.")
 
 # We use a 'form' so the page doesn't reload until you hit Submit
 with st.form("register_form"):
