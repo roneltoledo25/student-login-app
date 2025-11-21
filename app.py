@@ -111,7 +111,8 @@ if st.checkbox("Show All Registered Users"):
     df = pd.DataFrame(data, columns=["ID", "Username", "Password"])
     
     # Display it!
-    st.table(df)
+    #st.table(df)
+    st.dataframe(df, hide_index=True)
 
     # --- DOWNLOAD DATABASE SECTION ---
 st.markdown("---")
