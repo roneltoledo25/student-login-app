@@ -95,6 +95,15 @@ if submitted:
         else:
             st.error(f"❌ {message}")
 
+# --- VIEW USERS ON PAGE ---
+if st.checkbox("Show All Registered Users"):
+    conn = sqlite3.connect('student.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM student")
+    data = c.fetchall()
+    conn.close()
+    st.table(data)
+
     # --- DOWNLOAD DATABASE SECTION ---
 st.markdown("---")
 
