@@ -163,8 +163,8 @@ else:
 
 # --- ADMIN SETUP (Run once to create your user) ---
 # Uncomment the lines below, run the app once, then comment them out again!
-# conn = sqlite3.connect('student.db')
-# c = conn.cursor()
-# c.execute("INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)", ("teacher", "1234"))
-# conn.commit()
-# conn.close()
+conn = sqlite3.connect('student.db')
+c = conn.cursor()
+c.execute("INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)", ("teacher", "1234"))
+conn.commit()
+conn.close()
