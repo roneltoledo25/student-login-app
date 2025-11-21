@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 import sqlite3
 
@@ -99,10 +100,18 @@ if submitted:
 if st.checkbox("Show All Registered Users"):
     conn = sqlite3.connect('student.db')
     c = conn.cursor()
+    
+    # Get the data
     c.execute("SELECT * FROM student")
     data = c.fetchall()
     conn.close()
-    st.table(data)
+
+    # Create a nicely labeled table
+    # We assume the columns are: ID, Username, Password (based on your CREATE TABLE code)
+    df = pd.DataFrame(data, columns=["ID", "Username", "Password"])
+    
+    # Display it!
+    st.table(df)
 
     # --- DOWNLOAD DATABASE SECTION ---
 st.markdown("---")
