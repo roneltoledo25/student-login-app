@@ -94,3 +94,15 @@ if submitted:
             st.balloons() # A fun animation!
         else:
             st.error(f"❌ {message}")
+
+    # --- DOWNLOAD DATABASE SECTION ---
+st.markdown("---")
+
+# 1. Read the database file as binary data
+with open("student.db", "rb") as file:
+    btn = st.download_button(
+        label="📥 Download Database File",
+        data=file,
+        file_name="student.db",
+        mime="application/octet-stream"
+    )
