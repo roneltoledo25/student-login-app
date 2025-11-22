@@ -6,9 +6,12 @@ import io
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="SGS Pro Connect", page_icon="🇹🇭", layout="wide")
 
+# --- CONSTANTS ---
+DB_NAME = "sgs_database.db"  # <--- CHANGED THIS NAME TO FORCE A RESET
+
 # --- DATABASE SETUP ---
 def init_db():
-    conn = sqlite3.connect('student.db')
+    conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     
     # 1. Table for TEACHERS
@@ -39,7 +42,7 @@ def init_db():
 
 def register_user(username, password):
     try:
-        conn = sqlite3.connect('student.db')
+        conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
         conn.commit()
@@ -49,14 +52,14 @@ def register_user(username, password):
         return False # Username already exists
 
 def login_user(username, password):
-    conn = sqlite3.connect('student.db')
+    conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
     return c.fetchone()
 
 def save_grade(s_id, name, t1, t2, t3, final, teacher_name):
     total = t1 + t2 + t3 + final
-    conn = sqlite3.connect('student.db')
+    conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute("""
         INSERT OR REPLACE INTO grades (student_id, student_name, test1, test2, test3, final_score, total_score, recorded_by)
@@ -66,7 +69,7 @@ def save_grade(s_id, name, t1, t2, t3, final, teacher_name):
     conn.close()
 
 def get_all_grades():
-    conn = sqlite3.connect('student.db')
+    conn = sqlite3.connect(DB_NAME)
     df = pd.read_sql_query("SELECT * FROM grades", conn)
     conn.close()
     return df
@@ -84,8 +87,11 @@ init_db()
 def auth_page():
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
-        st.title("🇹🇭 SGS Pro Connect")
-        st.write("Online Grading System for Teachers")
+        # --- HEADER ---
+        st.markdown("## 🇹🇭 Student Grading System")
+        st.title("Professional Connect")
+        st.caption("Official Online Grade Management Portal")
+        st.markdown("---")
         
         # TABS: LOGIN vs REGISTER
         tab1, tab2 = st.tabs(["🔐 Login", "📝 Register New Teacher"])
@@ -115,7 +121,7 @@ def auth_page():
                 btn_reg = st.form_submit_button("Register")
                 
                 if btn_reg:
-                    if school_code == "SK2025": # <--- THIS IS YOUR SECRET CODE
+                    if school_code == "SK2025": # <--- SECRET CODE
                         if new_user and new_pwd:
                             if register_user(new_user, new_pwd):
                                 st.success("✅ Account Created! Please switch to Login tab.")
