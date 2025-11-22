@@ -292,7 +292,7 @@ else:
 # --- HIDE STREAMLIT DEFAULT UI ---
 hide_st_style = """
     <style>
-    #MainMenu {visibility: hidden;}       /* Hide hamburger menu */
+    
     footer {visibility: hidden;}          /* Hide footer */
     header {visibility: hidden;}          /* Hide header */
     </style>
