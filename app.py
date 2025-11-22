@@ -289,3 +289,12 @@ if st.session_state.logged_in:
 else:
     auth_page()
 
+# --- HIDE STREAMLIT DEFAULT UI ---
+hide_st_style = """
+    <style>
+    #MainMenu {visibility: hidden;}       /* Hide hamburger menu */
+    footer {visibility: hidden;}          /* Hide footer */
+    header {visibility: hidden;}          /* Hide header */
+    </style>
+"""
+st.markdown(hide_st_style, unsafe_allow_html=True)
